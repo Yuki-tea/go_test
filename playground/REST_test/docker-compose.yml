@@ -11,12 +11,14 @@ services:
     command: tail -f /dev/null
     depends_on:
       - db
+    env_file:
+      - .env
 
   db:
     image: postgres:15-alpine
     environment:
-      POSTGRES_USER: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       POSTGRES_DB: ${POSTGRES_DB}
     ports:
-      - "5432:54322"
+      - "5432:5432"
