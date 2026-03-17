@@ -70,11 +70,13 @@ func main() {
 	})
 
 	http.HandleFunc("/api/post", func(w http.ResponseWriter, r *http.Request) {
-		// create dummy data
-		post := BlogPost{
-			ID:	1,
-			Title:	"Getting Started with Go",
-			Content: "Go is an amazing language for backend development!",
+		var post BlogPost
+		row := db.QueryRow("SELECT id, title, content From blog_posts WHERE id = 1")
+		// need to pass the pointers
+		err := row.Scan(&post.ID, &post.Title, &post.Content)
+		if err != nil {
+			http.Error(w, "Failed to fetch post from database", http.StatusInternalServerError)
+			return
 		}
 		// tell the browser we are sending JSON, not a plain text
 		w.Header().Set("Content-Type", "application/json")
