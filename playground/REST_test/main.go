@@ -6,12 +6,20 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"encoding/json"
 
 	// We import the driver using an underscore. 
 	// This tells Go: "Load this package so it installs itself into database/sql, 
 	// but I won't call its functions directly."
 	_ "github.com/lib/pq"
 )
+// the fields must start with a capital letter to make it public
+// the struct tags show how to translate the data into JSON format
+type BlogPost struct {
+	ID	int `json:"id"`
+	Title string `json:"title"`
+	Content string `json:"content"`
+}
 
 func main() {
 	user := os.Getenv("POSTGRES_USER")
@@ -38,6 +46,7 @@ func main() {
 	http.HandleFunc("/ping", func(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintf(w, "The database connection was successful!")
 	})
+
 	fmt.Println("Web server is starting on port 8080...")
 	// ListenAndServe blocks the program from exiting. We wrap it in log.Fatal 
 	// so if the server crashes, it prints the error and exits gracefully.
