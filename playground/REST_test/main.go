@@ -47,6 +47,19 @@ func main() {
 		fmt.Fprintf(w, "The database connection was successful!")
 	})
 
+	http.HandleFunc("/api/post", func(w http.ResponseWriter, r *http.Request) {
+		// create dummy data
+		post := BlogPost{
+			ID:	1,
+			Title:	"Getting Started with Go",
+			Content: "Go is an amazing language for backend development!",
+		}
+		// tell the browser we are sending JSON, not a plain text
+		w.Header().Set("Content-Type", "application/json")
+		// encode thte Go struct into JSON and send it
+		json.NewEncoder(w).Encode(post)
+	})
+
 	fmt.Println("Web server is starting on port 8080...")
 	// ListenAndServe blocks the program from exiting. We wrap it in log.Fatal 
 	// so if the server crashes, it prints the error and exits gracefully.
