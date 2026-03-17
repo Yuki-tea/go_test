@@ -43,6 +43,28 @@ func main() {
 		fmt.Println("connection success!")
 	}
 
+	createTableSQL := `
+	CREATE TABLE IF NOT EXISTS blog_posts(
+		id SERIAL PRIMARY KEY,
+		title TEXT NOT NULL,
+		content TEXT NOT NULL
+	);`
+  // the blank identifier '_' is to ignore the result
+	_, err = db.Exec(createTableSQL)
+	if err != nil {
+		log.Fatal("Failed to create table:", err)
+	}
+	// insert a test post
+	insertPostSQL := `
+	INSERT INTO blog_posts (id, title, content)
+	VALUES (1, 'My First Go API', 'This data was pulled directly from PostgreSQL!')
+	ON CONFLICT (id) DO NOTHING;`
+	_, err = db.Exec(insertPostSQL) 
+	if err != nil {
+		log.Fatal("Failed to insert dummy data:", err)
+	}
+	fmt.Println("Database initialized successfully!")
+
 	http.HandleFunc("/ping", func(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintf(w, "The database connection was successful!")
 	})
