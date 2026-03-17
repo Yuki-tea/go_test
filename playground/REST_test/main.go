@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"fmt"
 	"log"
+	"net/http"
 
 	// We import the driver using an underscore. 
 	// This tells Go: "Load this package so it installs itself into database/sql, 
@@ -31,6 +32,14 @@ func main() {
 	if err != nil {
 		fmt.Println("connection failed!")
 	} else {
-		fmt.Println("connection successful!")
+		fmt.Println("connection success!")
 	}
+
+	http.HandleFunc("/ping", func(w http.ResponseWriter, r *http.Request) {
+		fmt.Fprintf(w, "The database connection was successful!")
+	})
+	fmt.Println("Web server is starting on port 8080...")
+	// ListenAndServe blocks the program from exiting. We wrap it in log.Fatal 
+	// so if the server crashes, it prints the error and exits gracefully.
+	log.Fatal(http.ListenAndServe(":8080", nil))
 }
