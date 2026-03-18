@@ -127,3 +127,38 @@ func DeletePostHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	w.WriteHeader(http.StatusNoContent)
 }
+
+func PutPostHandler(w http.ResponseWriter, r *http.Request) {
+	// grab the dynamic {id} from the URL
+	idStr := r.PathValue("id")
+
+	// string to integer
+	id, err := strconv.Atoi(idStr)
+	if err != nil {
+		http.Error(w, "Invalid ID format", http.StatusBadRequest)
+		return
+	}
+
+	var updatedPost BlogPost
+	// read the incoming JSON body and decode it into our struct
+	err = json.NewDecoder(r.Body).Decode(&updatedPost)
+	if err != nil {
+		http.Error(w, "Invalid JSON data", http.StatusBadRequest)
+		return
+	}
+	
+	putSQL := `
+		UPDATE blog_posts SET title = $1, content = $2 WHERE id = $3 RETURNING id
+	`
+
+	err = db.DB.QueryRow(putSQL, updatedPost.Title, updatedPost.Content, id).Scan(&updatedPost.ID)
+	if err != nil {
+		http.Error(w, "Failed to update database", http.StatusInternalServerError)
+		return
+	}
+	
+	w.Header().Set("Content-Type", "application/json")
+	// 200 OK
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(updatedPost)
+}
