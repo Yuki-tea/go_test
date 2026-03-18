@@ -3,6 +3,7 @@ package handlers
 import (
 	"encoding/json"
 	"net/http"
+	"strconv"
 
 	// custom package
 	"rest-api/db"
@@ -22,13 +23,16 @@ func GetAllPostsHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Failed to query database", http.StatusInternalServerError)
 		return
 	}
+	// if you forget this, the TCP connection remains active
 	defer rows.Close() // CRITICAL: Always close rows when done!
 
 	var posts []BlogPost
 
-	// loop through the results
+	// loop through the results (like a Iterater in Java)
 	for rows.Next() {
 		var p BlogPost
+		// rows actually pointing to a single row at each moment
+		// and passing the data to the p here
 		if err := rows.Scan(&p.ID, &p.Title, &p.Content); err != nil {
 			http.Error(w, "Failed to scan row", http.StatusInternalServerError)
 			return
@@ -44,20 +48,30 @@ func GetAllPostsHandler(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(posts)
 }
 
-func GetPostHandler(w http.ResponseWriter, r *http.Request) {
+func GetPostByIDHandler(w http.ResponseWriter, r *http.Request) {
+	// grab the dynamic {id} from the URL
+	idStr := r.PathValue("id")
+
+	// string to integer
+	id, err := strconv.Atoi(idStr)
+	if err != nil {
+		http.Error(w, "Invalid ID format", http.StatusBadRequest)
+		return
+	}
+
 	var post BlogPost
 
-	row := db.DB.QueryRow("SELECT id, title, content From blog_posts WHERE id = 1")
+	row := db.DB.QueryRow("SELECT id, title, content From blog_posts WHERE id = $1", id)
 	// need to pass the pointers
 	// the content of the row will be passed to post
-	err := row.Scan(&post.ID, &post.Title, &post.Content)
+	err = row.Scan(&post.ID, &post.Title, &post.Content)
 
 	if err != nil {
-		http.Error(w, "Failed to fetch post from database", http.StatusInternalServerError)
+		http.Error(w, "Post not found", http.StatusNotFound)
 		return
 	}
 	// tell the browser we are sending JSON, not a plain text
 	w.Header().Set("Content-Type", "application/json")
-	// encode thte Go struct into JSON and send it
+	// encode the Go struct into JSON and send it
 	json.NewEncoder(w).Encode(post)
 }
