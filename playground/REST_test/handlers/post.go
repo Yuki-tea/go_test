@@ -61,7 +61,7 @@ func GetPostByIDHandler(w http.ResponseWriter, r *http.Request) {
 
 	var post BlogPost
 
-	row := db.DB.QueryRow("SELECT id, title, content From blog_posts WHERE id = $1", id)
+	row := db.DB.QueryRow("SELECT id, title, content FROM blog_posts WHERE id = $1", id)
 	// need to pass the pointers
 	// the content of the row will be passed to post
 	err = row.Scan(&post.ID, &post.Title, &post.Content)
@@ -101,4 +101,29 @@ func CreatePostHandler(w http.ResponseWriter, r *http.Request) {
 	// 201 Created
 	w.WriteHeader(http.StatusCreated)
 	json.NewEncoder(w).Encode(newPost)
+}
+
+func DeletePostHandler(w http.ResponseWriter, r *http.Request) {
+	// grab the dynamic {id} from the URL
+	idStr := r.PathValue("id")
+
+	// string to integer
+	id, err := strconv.Atoi(idStr)
+	if err != nil {
+		http.Error(w, "Invalid ID format", http.StatusBadRequest)
+		return
+	}
+	// Exec for SQL commands with no return rows
+	result, err := db.DB.Exec("DELETE FROM blog_posts WHERE id = $1", id)
+	if err != nil {
+		http.Error(w, "Failed to delete post", http.StatusInternalServerError)
+		return
+	}
+	// check if the post actually existed
+	rowsAffected, err := result.RowsAffected()
+	if err == nil && rowsAffected == 0 {
+		http.Error(w, "Post not found", http.StatusNotFound)
+		return
+	}
+	w.WriteHeader(http.StatusNoContent)
 }
