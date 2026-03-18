@@ -21,6 +21,7 @@ func GetPostHandler(w http.ResponseWriter, r *http.Request) {
 
 	row := db.DB.QueryRow("SELECT id, title, content From blog_posts WHERE id = 1")
 	// need to pass the pointers
+	// the content of the row will be passed to post
 	err := row.Scan(&post.ID, &post.Title, &post.Content)
 
 	if err != nil {
