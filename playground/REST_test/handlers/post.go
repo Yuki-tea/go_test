@@ -16,6 +16,34 @@ type BlogPost struct {
 	Content string `json:"content"`
 }
 
+func GetAllPostsHandler(w http.ResponseWriter, r *http.Request) {
+	rows, err := db.DB.Query("SELECT id, title, content FROM blog_posts ORDER BY id ASC")
+	if err != nil {
+		http.Error(w, "Failed to query database", http.StatusInternalServerError)
+		return
+	}
+	defer rows.Close() // CRITICAL: Always close rows when done!
+
+	var posts []BlogPost
+
+	// loop through the results
+	for rows.Next() {
+		var p BlogPost
+		if err := rows.Scan(&p.ID, &p.Title, &p.Content); err != nil {
+			http.Error(w, "Failed to scan row", http.StatusInternalServerError)
+			return
+		}
+		posts = append(posts, p)
+	}
+
+	// if none, return an empty array
+	if posts == nil {
+		posts = []BlogPost{}
+	}
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(posts)
+}
+
 func GetPostHandler(w http.ResponseWriter, r *http.Request) {
 	var post BlogPost
 

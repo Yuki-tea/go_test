@@ -18,7 +18,7 @@ func main() {
 		fmt.Fprintf(w, "The database connection was successful!")
 	})
 
-	http.HandleFunc("GET /api/post", handlers.GetPostHandler)
+	http.HandleFunc("GET /api/posts", handlers.GetAllPostsHandler)
 
 	fmt.Println("Web server is starting on port 8080...")
 	// ListenAndServe blocks the program from exiting. We wrap it in log.Fatal 
