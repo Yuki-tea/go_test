@@ -28,7 +28,7 @@ func GetAllPostsHandler(w http.ResponseWriter, r *http.Request) {
 
 	var posts []BlogPost
 
-	// loop through the results (like a Iterater in Java)
+	// loop through the results (like a Iterator in Java)
 	for rows.Next() {
 		var p BlogPost
 		// rows actually pointing to a single row at each moment
@@ -74,4 +74,31 @@ func GetPostByIDHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	// encode the Go struct into JSON and send it
 	json.NewEncoder(w).Encode(post)
+}
+
+func CreatePostHandler(w http.ResponseWriter, r *http.Request) {
+	var newPost BlogPost
+	
+	// read the incoming JSON body and decode it into our struct
+	err := json.NewDecoder(r.Body).Decode(&newPost)
+	if err != nil {
+		http.Error(w, "Invalid JSON data", http.StatusBadRequest)
+		return
+	}
+
+	// use $1 and $2 as placeholders to prevent SQL Injection attacks!
+	// returning auto-generated ID
+	insertSQL := `
+		INSERT INTO blog_posts (title, content) VALUES ($1, $2) RETURNING id
+	`
+	err = db.DB.QueryRow(insertSQL, newPost.Title, newPost.Content).Scan(&newPost.ID)
+	if err != nil {
+		http.Error(w, "Failed to save to database", http.StatusInternalServerError)
+		return
+	}
+	
+	w.Header().Set("Content-Type", "application/json")
+	// 201 Created
+	w.WriteHeader(http.StatusCreated)
+	json.NewEncoder(w).Encode(newPost)
 }

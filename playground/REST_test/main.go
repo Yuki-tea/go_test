@@ -20,6 +20,7 @@ func main() {
 
 	http.HandleFunc("GET /api/posts", handlers.GetAllPostsHandler)
 	http.HandleFunc("GET /api/posts/{id}", handlers.GetPostByIDHandler)
+	http.HandleFunc("POST /api/posts", handlers.CreatePostHandler)
 
 	fmt.Println("Web server is starting on port 8080...")
 	// ListenAndServe blocks the program from exiting. We wrap it in log.Fatal 
