@@ -37,17 +37,19 @@ func GetPostByIDHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var post models.BlogPost
-
-	row := db.DB.QueryRow("SELECT id, title, content FROM blog_posts WHERE id = $1", id)
-	// need to pass the pointers
-	// the content of the row will be passed to post
-	err = row.Scan(&post.ID, &post.Title, &post.Content)
-
+	repo := &repository.PostgresPostRepository{}
+	post, err := repo.GetByID(id)
 	if err != nil {
-		http.Error(w, "Post not found", http.StatusNotFound)
+		if err == sql.ErrNoRows {
+			http.Error(w, "Post not found", http.StatusNotFound) // 404
+			return
+		}
+		
+		// if there was unspecified errors (TCP connection dropped, bad syntax, etc...)
+		http.Error(w, "Failed to query database", http.StatusInternalServerError)
 		return
 	}
+
 	// tell the browser we are sending JSON, not a plain text
 	w.Header().Set("Content-Type", "application/json")
 	// encode the Go struct into JSON and send it

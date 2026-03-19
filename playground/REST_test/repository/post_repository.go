@@ -54,3 +54,19 @@ func(r *PostgresPostRepository) GetAll() ([]models.BlogPost, error) {
 	}
 	return posts, nil
 }
+
+// you have to use r here, because it's used as r in GetAll func above
+func (r *PostgresPostRepository) GetByID(id int) (models.BlogPost, error) {
+	var post models.BlogPost
+
+	row := db.DB.QueryRow("SELECT id, title, content FROM blog_posts WHERE id = $1", id)
+	// need to pass the pointers
+	// the content of the row will be passed to post
+	err := row.Scan(&post.ID, &post.Title, &post.Content)
+
+	if err != nil {
+		return post, err
+	}
+
+	return post, nil
+}
