@@ -36,6 +36,9 @@ func main() {
 	http.HandleFunc("PATCH /api/posts/{id}", postHandler.PatchPostHandler)
 
 	allowedOrigin := os.Getenv("FRONTEND_URL")
+	if allowedOrigin == "" {
+		allowedOrigin = "http://localhost:3000"
+	}
 	c := cors.New(cors.Options{
 		// explicitly allow the Next.js default port
 		AllowedOrigins: []string{allowedOrigin},
