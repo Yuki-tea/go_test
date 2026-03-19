@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"errors"
 
-	"database/sql"
 	"rest-api/db"
 	"rest-api/models"
 )

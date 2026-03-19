@@ -12,9 +12,13 @@ import (
 	"rest-api/repository"
 )
 
-func GetAllPostsHandler(w http.ResponseWriter, r *http.Request) {
-	repo := &repository.PostgresPostRepository{}
-	posts, err := repo.GetAll()
+type PostHandler struct {
+	Repo repository.PostRepository // not the Postgres struct
+}
+
+// add the receiver
+func (h *PostHandler) GetAllPostsHandler(w http.ResponseWriter, r *http.Request) {
+	posts, err := h.Repo.GetAll()
 	if err != nil {
 		log.Printf("GetAllPosts error: %v\n", err)
 		http.Error(w, "Failed to fetch posts from the database", http.StatusInternalServerError)
@@ -24,7 +28,7 @@ func GetAllPostsHandler(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(posts)
 }
 
-func GetPostByIDHandler(w http.ResponseWriter, r *http.Request) {
+func (h *PostHandler) GetPostByIDHandler(w http.ResponseWriter, r *http.Request) {
 	// grab the dynamic {id} from the URL
 	idStr := r.PathValue("id")
 
@@ -35,8 +39,7 @@ func GetPostByIDHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	repo := &repository.PostgresPostRepository{}
-	post, err := repo.GetByID(id)
+	post, err := h.Repo.GetByID(id)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			http.Error(w, "Post not found", http.StatusNotFound) // 404
@@ -54,7 +57,7 @@ func GetPostByIDHandler(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(post)
 }
 
-func CreatePostHandler(w http.ResponseWriter, r *http.Request) {
+func (h *PostHandler) CreatePostHandler(w http.ResponseWriter, r *http.Request) {
 	var newPost models.BlogPost
 	
 	// read the incoming JSON body and decode it into our struct
@@ -64,8 +67,7 @@ func CreatePostHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	repo := &repository.PostgresPostRepository{}
-	err = repo.Create(&newPost)
+	err = h.Repo.Create(&newPost)
 	if err != nil {
 		http.Error(w, "Failed to save to database", http.StatusInternalServerError)
 		return
@@ -77,7 +79,7 @@ func CreatePostHandler(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(newPost)
 }
 
-func PutPostHandler(w http.ResponseWriter, r *http.Request) {
+func (h *PostHandler) PutPostHandler(w http.ResponseWriter, r *http.Request) {
 	// grab the dynamic {id} from the URL
 	idStr := r.PathValue("id")
 
@@ -97,8 +99,7 @@ func PutPostHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	repo := &repository.PostgresPostRepository{}
-	updatedPost, err := repo.Update(id, newPost)
+	updatedPost, err := h.Repo.Update(id, newPost)
 	if err != nil {
 		http.Error(w, "Failed to update database", http.StatusInternalServerError)
 		return
@@ -110,7 +111,7 @@ func PutPostHandler(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(updatedPost)
 }
 
-func PatchPostHandler(w http.ResponseWriter, r *http.Request) {
+func (h *PostHandler) PatchPostHandler(w http.ResponseWriter, r *http.Request) {
 	idStr := r.PathValue("id")
 	id, err := strconv.Atoi(idStr)
 	if err != nil {
@@ -130,8 +131,7 @@ func PatchPostHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "No fields provided to update", http.StatusBadRequest)
 		return
 	}
-	repo := &repository.PostgresPostRepository{}
-	updatedPost, err := repo.Patch(id, updates)
+	updatedPost, err := h.Repo.Patch(id, updates)
 
 	if err != nil {
 		http.Error(w, "Post not found or failed to update", http.StatusInternalServerError)
@@ -144,7 +144,7 @@ func PatchPostHandler(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(updatedPost)
 }
 
-func DeletePostHandler(w http.ResponseWriter, r *http.Request) {
+func (h *PostHandler) DeletePostHandler(w http.ResponseWriter, r *http.Request) {
 	// grab the dynamic {id} from the URL
 	idStr := r.PathValue("id")
 
@@ -155,8 +155,7 @@ func DeletePostHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	repo := &repository.PostgresPostRepository{}
-	err = repo.Delete(id)
+	err = h.Repo.Delete(id)
 	if err != nil {
 		if err.Error() == "post not found" {
 			http.Error(w, "Post not found", http.StatusNotFound)
