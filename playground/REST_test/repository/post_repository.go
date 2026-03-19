@@ -83,3 +83,14 @@ func (r *PostgresPostRepository) Create(post *models.BlogPost) error {
 	}
 	return nil
 }
+
+func (r *PostgresPostRepository) Update(id int, post models.BlogPost) (models.BlogPost, error) {
+	putSQL := `
+		UPDATE blog_posts SET title = $1, content = $2 WHERE id = $3 RETURNING id
+	`
+	err := db.DB.QueryRow(putSQL, post.Title, post.Content, id).Scan(&post.ID)
+	if err != nil {
+		return post, err
+	}
+	return post, nil
+}

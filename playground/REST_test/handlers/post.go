@@ -116,19 +116,16 @@ func PutPostHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var updatedPost models.BlogPost
+	var newPost models.BlogPost
 	// read the incoming JSON body and decode it into our struct
-	err = json.NewDecoder(r.Body).Decode(&updatedPost)
+	err = json.NewDecoder(r.Body).Decode(&newPost)
 	if err != nil {
 		http.Error(w, "Invalid JSON data", http.StatusBadRequest)
 		return
 	}
-	
-	putSQL := `
-		UPDATE blog_posts SET title = $1, content = $2 WHERE id = $3 RETURNING id
-	`
 
-	err = db.DB.QueryRow(putSQL, updatedPost.Title, updatedPost.Content, id).Scan(&updatedPost.ID)
+	repo := &repository.PostgresPostRepository{}
+	updatedPost, err := repo.Update(id, newPost)
 	if err != nil {
 		http.Error(w, "Failed to update database", http.StatusInternalServerError)
 		return
