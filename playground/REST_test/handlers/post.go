@@ -5,38 +5,22 @@ import (
 	"encoding/json"
 	"net/http"
 	"strconv"
+	"database/sql"
+	"log"
 
 	// custom package
 	"rest-api/db"
 	"rest-api/models"
+	"rest-api/repository"
 )
 
 func GetAllPostsHandler(w http.ResponseWriter, r *http.Request) {
-	rows, err := db.DB.Query("SELECT id, title, content FROM blog_posts ORDER BY id ASC")
+	repo := &repository.PostgresPostRepository{}
+	posts, err := repo.GetAll()
 	if err != nil {
-		http.Error(w, "Failed to query database", http.StatusInternalServerError)
+		log.Printf("GetAllPosts error: %v\n", err)
+		http.Error(w, "Failed to fetch posts from the database", http.StatusInternalServerError)
 		return
-	}
-	// if you forget this, the TCP connection remains active
-	defer rows.Close() // CRITICAL: Always close rows when done!
-
-	var posts []models.BlogPost
-
-	// loop through the results (like a Iterator in Java)
-	for rows.Next() {
-		var p models.BlogPost
-		// rows actually pointing to a single row at each moment
-		// and passing the data to the p here
-		if err := rows.Scan(&p.ID, &p.Title, &p.Content); err != nil {
-			http.Error(w, "Failed to scan row", http.StatusInternalServerError)
-			return
-		}
-		posts = append(posts, p)
-	}
-
-	// if none, return an empty array
-	if posts == nil {
-		posts = []models.BlogPost{}
 	}
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(posts)
