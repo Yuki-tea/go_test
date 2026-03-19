@@ -94,3 +94,40 @@ func (r *PostgresPostRepository) Update(id int, post models.BlogPost) (models.Bl
 	}
 	return post, nil
 }
+
+func (r *PostgresPostRepository) Patch(id int, updates map[string]interface{}) (models.BlogPost, error) {
+	// dynamically build the SQL query
+	query := "UPDATE blog_posts SET "
+
+	// empty array
+	// anything can be hold
+	// need this to handle multiple data types
+	args := []interface{}{} // Holds the actual values we will inject
+	argId := 1 // keeps track of our $1, $2 placeholders
+
+	if title, exists := updates["title"]; exists {
+		query += fmt.Sprintf("title = $%d, ", argId)
+		args = append(args, title)
+		argId++
+	}
+
+	if content, exists := updates["content"]; exists {
+		query += fmt.Sprintf("content = $%d, ", argId)
+		args = append(args, content)
+		argId++
+	}
+
+	// slice off the trailing comma and space from our loop
+	query = query[:len(query)-2]
+
+	// append the WHERE clause and returning fields
+	query += fmt.Sprintf(" WHERE id = $%d RETURNING id, title, content", argId)
+	args = append(args, id)
+
+	var updatedPost models.BlogPost
+	err := db.DB.QueryRow(query, args...).Scan(&updatedPost.ID, &updatedPost.Title, &updatedPost.Content)
+	if err != nil {
+		return updatedPost, err
+	}
+	return updatedPost, nil
+}

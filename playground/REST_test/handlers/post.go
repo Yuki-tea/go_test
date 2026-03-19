@@ -157,41 +157,14 @@ func PatchPostHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "No fields provided to update", http.StatusBadRequest)
 		return
 	}
+	repo := &repository.PostgresPostRepository{}
+	updatedPost, err := repo.Patch(id, updates)
 
-	// dynamically build the SQL query
-	query := "UPDATE blog_posts SET "
-	// empty array
-	// anything can be hold
-	// need this to handle multiple data types
-	args := []interface{}{} // Holds the actual values we will inject
-	argId := 1 // keeps track of our $1, $2 placeholders
-
-	if title, exists := updates["title"]; exists {
-		query += fmt.Sprintf("title = $%d, ", argId)
-		args = append(args, title)
-		argId++
-	}
-
-	if content, exists := updates["content"]; exists {
-		query += fmt.Sprintf("content = $%d, ", argId)
-		args = append(args, content)
-		argId++
-	}
-
-	// slice off the trailing comma and space from our loop
-	query = query[:len(query)-2]
-
-	// append the WHERE clause and returning fields
-	query += fmt.Sprintf(" WHERE id = $%d RETURNING id, title, content", argId)
-	args = append(args, id)
-
-	var updatedPost models.BlogPost
-	err = db.DB.QueryRow(query, args...).Scan(&updatedPost.ID, &updatedPost.Title, &updatedPost.Content)
 	if err != nil {
 		http.Error(w, "Post not found or failed to update", http.StatusInternalServerError)
 		return
 	}
-	
+
 	w.Header().Set("Content-Type", "application/json")
 	// 200 OK
 	w.WriteHeader(http.StatusOK)
