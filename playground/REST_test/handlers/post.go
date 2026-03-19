@@ -66,12 +66,8 @@ func CreatePostHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// use $1 and $2 as placeholders to prevent SQL Injection attacks!
-	// returning auto-generated ID
-	insertSQL := `
-		INSERT INTO blog_posts (title, content) VALUES ($1, $2) RETURNING id
-	`
-	err = db.DB.QueryRow(insertSQL, newPost.Title, newPost.Content).Scan(&newPost.ID)
+	repo := &repository.PostgresPostRepository{}
+	err = repo.Create(&newPost)
 	if err != nil {
 		http.Error(w, "Failed to save to database", http.StatusInternalServerError)
 		return

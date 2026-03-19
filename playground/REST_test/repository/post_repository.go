@@ -70,3 +70,16 @@ func (r *PostgresPostRepository) GetByID(id int) (models.BlogPost, error) {
 
 	return post, nil
 }
+
+func (r *PostgresPostRepository) Create(post *models.BlogPost) error {
+	// use $1 and $2 as placeholders to prevent SQL Injection attacks!
+	// returning auto-generated ID
+	insertSQL := `
+		INSERT INTO blog_posts (title, content) VALUES ($1, $2) RETURNING id
+	`
+	err := db.DB.QueryRow(insertSQL, post.Title, post.Content).Scan(&post.ID)
+	if err != nil {
+		return err
+	}
+	return nil
+}
