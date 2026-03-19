@@ -131,3 +131,17 @@ func (r *PostgresPostRepository) Patch(id int, updates map[string]interface{}) (
 	}
 	return updatedPost, nil
 }
+
+func (r *PostgresPostRepository) Delete(id int) error {
+	// Exec for SQL commands with no return rows
+	result, err := db.DB.Exec("DELETE FROM blog_posts WHERE id = $1", id)
+	if err != nil {
+		return err
+	}
+	// check if the post actually existed
+	rowsAffected, err := result.RowsAffected()
+	if err == nil && rowsAffected == 0 {
+		return errors.New("post not found")
+	}
+	return err
+}

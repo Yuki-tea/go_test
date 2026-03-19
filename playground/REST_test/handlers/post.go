@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"fmt"
 	"encoding/json"
 	"net/http"
 	"strconv"
@@ -9,7 +8,6 @@ import (
 	"log"
 
 	// custom package
-	"rest-api/db"
 	"rest-api/models"
 	"rest-api/repository"
 )
@@ -79,31 +77,6 @@ func CreatePostHandler(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(newPost)
 }
 
-func DeletePostHandler(w http.ResponseWriter, r *http.Request) {
-	// grab the dynamic {id} from the URL
-	idStr := r.PathValue("id")
-
-	// string to integer
-	id, err := strconv.Atoi(idStr)
-	if err != nil {
-		http.Error(w, "Invalid ID format", http.StatusBadRequest)
-		return
-	}
-	// Exec for SQL commands with no return rows
-	result, err := db.DB.Exec("DELETE FROM blog_posts WHERE id = $1", id)
-	if err != nil {
-		http.Error(w, "Failed to delete post", http.StatusInternalServerError)
-		return
-	}
-	// check if the post actually existed
-	rowsAffected, err := result.RowsAffected()
-	if err == nil && rowsAffected == 0 {
-		http.Error(w, "Post not found", http.StatusNotFound)
-		return
-	}
-	w.WriteHeader(http.StatusNoContent)
-}
-
 func PutPostHandler(w http.ResponseWriter, r *http.Request) {
 	// grab the dynamic {id} from the URL
 	idStr := r.PathValue("id")
@@ -169,4 +142,29 @@ func PatchPostHandler(w http.ResponseWriter, r *http.Request) {
 	// 200 OK
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(updatedPost)
+}
+
+func DeletePostHandler(w http.ResponseWriter, r *http.Request) {
+	// grab the dynamic {id} from the URL
+	idStr := r.PathValue("id")
+
+	// string to integer
+	id, err := strconv.Atoi(idStr)
+	if err != nil {
+		http.Error(w, "Invalid ID format", http.StatusBadRequest)
+		return
+	}
+
+	repo := &repository.PostgresPostRepository{}
+	err = repo.Delete(id)
+	if err != nil {
+		if err.Error() == "post not found" {
+			http.Error(w, "Post not found", http.StatusNotFound)
+			return
+		}
+
+		http.Error(w, "Failed to delete post", http.StatusInternalServerError)
+		return
+	}
+	w.WriteHeader(http.StatusNoContent)
 }
